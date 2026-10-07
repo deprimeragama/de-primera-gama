@@ -1,39 +1,295 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>De Primera Gama</title>
-<meta name="description" content="Catálogo de productos de De Primera Gama">
-<style>
-:root{--green:#0d5c3a;--light:#f5f7f5;--dark:#17352a;--accent:#25d366}
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--light);color:#222}.top{background:var(--green);color:#fff;padding:18px 16px;position:sticky;top:0;z-index:5}.top h1{margin:0;font-size:25px}.top p{margin:4px 0 0;font-size:14px}.wrap{max-width:1100px;margin:auto;padding:18px}.hero{background:#fff;border-radius:16px;padding:24px;margin-bottom:16px;box-shadow:0 2px 10px #00000012}.hero h2{margin:0 0 8px;color:var(--dark)}.search{width:100%;padding:14px;border:1px solid #ddd;border-radius:10px;font-size:16px;margin:10px 0}.cats{display:flex;gap:8px;overflow:auto;padding:4px 0 12px}.cats button{border:0;border-radius:20px;padding:10px 14px;background:#e4eee9;white-space:nowrap}.cats button.active{background:var(--green);color:#fff}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}.card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px #00000012;display:flex;flex-direction:column}.photo{height:150px;background:#eef1ef;display:flex;align-items:center;justify-content:center;color:#777;font-size:44px}.info{padding:13px}.info h3{margin:0 0 6px;font-size:17px}.desc{font-size:13px;color:#666;min-height:32px}.price{font-size:20px;font-weight:700;color:var(--green);margin:10px 0}.add{width:100%;padding:11px;border:0;border-radius:9px;background:var(--green);color:#fff;font-weight:700}.cart{position:sticky;bottom:10px;margin:18px 0 0;background:#17352a;color:#fff;border-radius:14px;padding:14px;display:flex;gap:12px;align-items:center;justify-content:space-between}.wa{background:var(--accent);color:#063b1b;border:0;padding:12px 16px;border-radius:10px;font-weight:700}.empty{text-align:center;padding:35px;color:#777}.footer{text-align:center;padding:25px;color:#777;font-size:13px}@media(max-width:500px){.grid{grid-template-columns:repeat(2,1fr)}.photo{height:120px}.info h3{font-size:15px}.price{font-size:18px}.cart{font-size:13px}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>De Primera, Gama — Tienda</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --primario: #25D366;
+      --fondo: #f5f5f5;
+      --tarjeta: white;
+      --texto: #333;
+      --sombra: 0 2px 8px rgba(0,0,0,.1);
+    }
+    * {margin:0; padding:0; box-sizing:border-box; font-family:system-ui, sans-serif}
+    body {background:var(--fondo); color:var(--texto); padding:1rem; max-width:1200px; margin:0 auto}
+    header {text-align:center; margin-bottom:2rem}
+    h1 {color:#222; margin-bottom:.5rem}
+
+    .grid {display:grid; grid-template-columns:repeat(auto-fill, minmax(250px,1fr)); gap:1.5rem}
+    .producto {background:var(--tarjeta); border-radius:12px; padding:1rem; box-shadow:var(--sombra)}
+    .producto h3 {margin-bottom:.5rem}
+    .precio {font-weight:bold; color:#1a9e4f; margin:.5rem 0; font-size:1.1rem}
+    .btn {border:none; border-radius:8px; padding:.7rem 1rem; cursor:pointer; font-weight:600; width:100%; margin-top:.5rem; transition:.2s}
+    .btn-agregar {background:var(--primario); color:white}
+    .btn-agregar:hover {background:#1fb855}
+
+    .carrito-fijo {position:fixed; top:1rem; right:1rem; z-index:999}
+    .btn-carrito {background:#222; color:white; border-radius:50%; width:55px; height:55px; display:flex; align-items:center; justify-content:center; font-size:1.4rem}
+    .contador {position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:24px; height:24px; font-size:.75rem; display:flex; align-items:center; justify-content:center; font-weight:bold}
+
+    .panel {position:fixed; inset:0 0 0 auto; width:min(380px, 100%); background:white; box-shadow:-4px 0 15px rgba(0,0,0,.15); padding:1.5rem; overflow-y:auto; transform:translateX(100%); transition:.3s; z-index:1000}
+    .panel.abierto {transform:translateX(0)}
+    .cerrar {position:absolute; top:1rem; right:1rem; background:none; border:none; font-size:1.5rem; cursor:pointer}
+    .item {display:flex; justify-content:space-between; align-items:center; padding:.7rem 0; border-bottom:1px solid #eee}
+    .cantidad {display:flex; gap:.5rem; align-items:center}
+    .cantidad button {width:28px; height:28px; border-radius:50%; border:none; background:#eee; cursor:pointer; font-weight:bold}
+    .total {font-size:1.3rem; font-weight:bold; margin:1rem 0}
+    .btn-wsp {background:var(--primario); color:white; font-size:1rem; margin-top:1rem}
+    .btn-vaciar {background:#ef4444; color:white}
+
+    .admin-seccion {margin-top:3rem; padding:1.5rem; background:#fffbe6; border-radius:12px; border:2px dashed #f5c800}
+    .admin-seccion.oculto {display:none}
+    .admin-seccion h2 {font-size:1.1rem; margin-bottom:1rem}
+    form {display:grid; gap:.7rem; grid-template-columns:1fr auto; align-items:center; flex-wrap:wrap}
+    form input {padding:.6rem; border:1px solid #ddd; border-radius:6px}
+    .lista-admin {margin-top:1rem}
+    .fila-admin {display:flex; justify-content:space-between; align-items:center; padding:.5rem; background:white; margin:.3rem 0; border-radius:6px}
+    .btn-eliminar {background:#ef4444; color:white; padding:.4rem .7rem; font-size:.85rem; width:auto}
+    .btn-oculto {background:#6b7280; color:white; padding:.4rem .7rem; font-size:.85rem; width:auto; margin-left:.5rem}
+
+    .metodos {margin:1rem 0}
+    .metodos label {display:block; padding:.5rem 0; cursor:pointer}
+    .cargando {text-align:center; padding:2rem; color:#666}
+    .pass-container {text-align:center; margin-bottom:1rem}
+    .pass-container input {padding:.5rem; width:200px; border-radius:6px; border:1px solid #ddd}
+  </style>
 </head>
 <body>
-<header class="top"><h1>De Primera Gama</h1><p>Productos de almacén · Pedidos por WhatsApp</p></header>
-<main class="wrap">
-<section class="hero"><h2>Catálogo</h2><p>Elegí tus productos, agregalos al carrito y enviá tu pedido por WhatsApp.</p><input id="search" class="search" placeholder="Buscar productos..." autocomplete="off"><div id="cats" class="cats"></div></section>
-<section id="products" class="grid"></section>
-<div id="cart" class="cart" hidden><div><b id="count">0</b> productos · Total: <b id="total">$0</b></div><button class="wa" onclick="sendWhatsApp()">Enviar pedido por WhatsApp</button></div>
-<footer class="footer">De Primera Gama · Instagram: @deprimera.gama · Envíos a domicilio</footer>
-</main>
+
+  <header>
+    <h1>🛍️ De Primera, Gama</h1>
+    <p>Seleccioná tus productos y te lo envío por WhatsApp</p>
+  </header>
+
+  <div class="carrito-fijo">
+    <button class="btn-carrito" onclick="abrirCarrito()">🛒 <span class="contador" id="contador">0</span></button>
+  </div>
+
+  <div class="grid" id="listaProductos">
+    <div class="cargando">Cargando productos...</div>
+  </div>
+
+  <div class="panel" id="panelCarrito">
+    <button class="cerrar" onclick="cerrarCarrito()">✕</button>
+    <h2>Tu Pedido</h2>
+    <div id="itemsCarrito"></div>
+    <div class="total">Total: $<span id="total">0.00</span></div>
+
+    <div class="metodos">
+      <p><strong>Forma de pago:</strong></p>
+      <label><input type="radio" name="pago" value="Efectivo" checked> 💵 Efectivo</label>
+      <label><input type="radio" name="pago" value="Transferencia"> 🏦 Transferencia</label>
+      <label><input type="radio" name="pago" value="Mercado Pago"> 💳 Mercado Pago</label>
+      <label><input type="radio" name="pago" value="Contra reembolso"> 📦 Contra reembolso</label>
+    </div>
+
+    <button class="btn btn-wsp" onclick="enviarPedido()">📲 Enviar por WhatsApp</button>
+    <button class="btn btn-vaciar" onclick="vaciarCarrito()">🗑️ Vaciar carrito</button>
+  </div>
+
+  <!-- PANEL DE ADMINISTRACIÓN -->
+  <div class="admin-seccion oculto" id="panelAdmin">
+    <h2>🔧 Panel de Administración</h2>
+    <form onsubmit="agregarProducto(event)">
+      <input type="text" id="nombre" placeholder="Nombre del producto" required>
+      <input type="number" step="0.01" id="precio" placeholder="Precio" required style="width:120px">
+      <button class="btn btn-agregar" style="width:auto">➕ Agregar</button>
+    </form>
+    <div class="lista-admin" id="listaAdmin"></div>
+  </div>
+  <div class="pass-container" id="cajaPass">
+    <input type="password" id="adminPass" placeholder="🔑 Contraseña de administrador">
+    <button class="btn btn-agregar" style="width:auto; margin-left:.5rem" onclick="mostrarAdmin()">Entrar</button>
+  </div>
+
 <script>
-const phone='5493412141327';
-const products=[
-{id:1,name:'Yerba Mate',price:3500,cat:'Almacén',desc:'Yerba mate tradicional',emoji:'🧉'},
-{id:2,name:'Gaseosa 2L',price:2800,cat:'Bebidas',desc:'Gaseosa familiar',emoji:'🥤'},
-{id:3,name:'Galletitas',price:1500,cat:'Almacén',desc:'Galletitas surtidas',emoji:'🍪'},
-{id:4,name:'Detergente',price:1900,cat:'Limpieza',desc:'Detergente para vajilla',emoji:'🧴'}
-];
-let cart={};let category='Todos';
-const money=n=>new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}).format(n);
-function renderCats(){let cats=['Todos',...new Set(products.map(p=>p.cat))];document.getElementById('cats').innerHTML=cats.map(c=>`<button class="${c===category?'active':''}" onclick="category='${c}';renderCats();render()">${c}</button>`).join('')}
-function render(){let q=document.getElementById('search').value.toLowerCase();let list=products.filter(p=>(category==='Todos'||p.cat===category)&&(`${p.name} ${p.desc}`.toLowerCase().includes(q)));let el=document.getElementById('products');el.innerHTML=list.length?list.map(p=>`<article class="card"><div class="photo">${p.emoji}</div><div class="info"><h3>${p.name}</h3><div class="desc">${p.desc}</div><div class="price">${money(p.price)}</div><button class="add" onclick="add(${p.id})">Agregar al carrito</button></div></article>`).join(''):'<div class="empty">No encontramos productos.</div>';updateCart()}
-function add(id){cart[id]=(cart[id]||0)+1;updateCart()}
-function updateCart(){let ids=Object.keys(cart);let count=ids.reduce((s,id)=>s+cart[id],0);let total=ids.reduce((s,id)=>{let p=products.find(x=>x.id==id);return s+p.price*cart[id]},0);document.getElementById('cart').hidden=count===0;document.getElementById('count').textContent=count;document.getElementById('total').textContent=money(total)}
-function sendWhatsApp(){let ids=Object.keys(cart);if(!ids.length)return;let total=0;let lines=['Hola, quiero hacer este pedido desde De Primera Gama:',''];ids.forEach(id=>{let p=products.find(x=>x.id==id);let sub=p.price*cart[id];total+=sub;lines.push(`${cart[id]} x ${p.name} — ${money(sub)}`)});lines.push('',`Total: ${money(total)}`);lines.push('','¿Me confirman disponibilidad y envío a domicilio?');window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(lines.join('\n')),'_blank')}
-document.getElementById('search').addEventListener('input',render);renderCats();render();
+// ==================================================
+// 🔑 TUS DATOS YA CARGADOS
+// ==================================================
+const SUPABASE_URL = "https://hnbiphgdvypmicmoowp.supabase.co";
+// ⚠️ PEGÁ TU CLAVE ANON ACÁ ABAJO:
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuYmlwaGdkdnp5cG1pY21vb3dwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNDEwMjIsImV4cCI6MjEwNjgxNzAyMn0.DDUqU-LbK0QS6U7DdmrdCN3hPOB9cNlSJuhhG54HvKo"; 
+const NUMERO_WHATSAPP = "543412141327";
+const CONTRASEÑA_ADMIN = "ponéTuContraseñaAca123"; // Elegí tu clave
+
+// Inicializar cliente
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let carrito = [];
+let productos = [];
+
+cargarProductos();
+
+async function cargarProductos(){
+  const { data, error } = await supabase
+    .from('productos')
+    .select('*')
+    .eq('activo', true)
+    .order('id');
+  
+  if(error) {
+    console.error(error);
+    document.getElementById('listaProductos').innerHTML = 
+      "Error cargando productos. Verificá la clave y las tablas.";
+    return;
+  }
+  productos = data;
+  renderizar();
+}
+
+function renderizar(){
+  const contenedor = document.getElementById('listaProductos');
+  contenedor.innerHTML = '';
+  productos.forEach(p=>{
+    contenedor.innerHTML += `
+      <div class="producto">
+        <h3>${p.nombre}</h3>
+        <p class="precio">$${parseFloat(p.precio).toFixed(2)}</p>
+        <button class="btn btn-agregar" onclick="agregarAlCarrito(${p.id})">Agregar al carrito</button>
+      </div>`;
+  });
+
+  const admin = document.getElementById('listaAdmin');
+  admin.innerHTML = '';
+  productos.forEach(p=>{
+    admin.innerHTML += `
+      <div class="fila-admin">
+        <span>${p.nombre} — $${parseFloat(p.precio).toFixed(2)}</span>
+        <div>
+          <button class="btn-oculto" onclick="cambiarEstado(${p.id}, ${!p.activo})">
+            ${p.activo ? 'Ocultar' : 'Mostrar'}
+          </button>
+          <button class="btn-eliminar" onclick="borrarProducto(${p.id})">Eliminar</button>
+        </div>
+      </div>`;
+  });
+  actualizarCarrito();
+}
+
+function mostrarAdmin(){
+  const pass = document.getElementById('adminPass').value;
+  if(pass === CONTRASEÑA_ADMIN){
+    document.getElementById('panelAdmin').classList.remove('oculto');
+    document.getElementById('cajaPass').style.display = 'none';
+  }else{
+    alert('Contraseña incorrecta ❌');
+  }
+}
+
+async function agregarProducto(e){
+  e.preventDefault();
+  const nombre = document.getElementById('nombre').value.trim();
+  const precio = parseFloat(document.getElementById('precio').value);
+  if(!nombre || isNaN(precio)) return;
+
+  const { error } = await supabase
+    .from('productos')
+    .insert({ nombre, precio });
+  
+  if(error) return alert('Error: ' + error.message);
+  e.target.reset();
+  cargarProductos();
+}
+
+async function borrarProducto(id){
+  if(!confirm('¿Eliminar este producto?')) return;
+  const { error } = await supabase
+    .from('productos')
+    .delete()
+    .eq('id', id);
+  
+  if(error) return alert('Error: ' + error.message);
+  cargarProductos();
+}
+
+async function cambiarEstado(id, nuevoEstado){
+  const { error } = await supabase
+    .from('productos')
+    .update({ activo: nuevoEstado })
+    .eq('id', id);
+  
+  if(error) return alert('Error: ' + error.message);
+  cargarProductos();
+}
+
+function agregarAlCarrito(id){
+  const prod = productos.find(p=>p.id===id);
+  const existe = carrito.find(c=>c.id===id);
+  existe ? existe.cantidad++ : carrito.push({...prod, cantidad:1});
+  actualizarCarrito();
+}
+
+function cambiarCantidad(id, delta){
+  const item = carrito.find(c=>c.id===id);
+  if(!item) return;
+  item.cantidad += delta;
+  if(item.cantidad<=0) carrito = carrito.filter(c=>c.id!==id);
+  actualizarCarrito();
+}
+
+function actualizarCarrito(){
+  const contador = carrito.reduce((s,i)=>s+i.cantidad,0);
+  document.getElementById('contador').textContent = contador;
+
+  const items = document.getElementById('itemsCarrito');
+  items.innerHTML = '';
+  let total = 0;
+  carrito.forEach(i=>{
+    const subtotal = parseFloat(i.precio)*i.cantidad;
+    total += subtotal;
+    items.innerHTML += `
+      <div class="item">
+        <div>
+          <strong>${i.nombre}</strong><br>
+          $${parseFloat(i.precio).toFixed(2)} c/u
+        </div>
+        <div class="cantidad">
+          <button onclick="cambiarCantidad(${i.id},-1)">−</button>
+          ${i.cantidad}
+          <button onclick="cambiarCantidad(${i.id},1)">+</button>
+        </div>
+      </div>`;
+  });
+  document.getElementById('total').textContent = total.toFixed(2);
+}
+
+function vaciarCarrito(){
+  carrito = [];
+  actualizarCarrito();
+}
+
+function abrirCarrito(){ document.getElementById('panelCarrito').classList.add('abierto'); }
+function cerrarCarrito(){ document.getElementById('panelCarrito').classList.remove('abierto'); }
+
+async function enviarPedido(){
+  if(carrito.length===0) return alert('El carrito está vacío');
+  const metodo = document.querySelector('input[name=pago]:checked').value;
+  const total = carrito.reduce((s,i)=>s+parseFloat(i.precio)*i.cantidad,0);
+
+  // Guardar en base de datos
+  await supabase.from('pedidos').insert({
+    datos: carrito,
+    metodo_pago: metodo,
+    total: total
+  });
+
+  // Enviar por WhatsApp
+  let msg = '*NUEVO PEDIDO — De Primera, Gama*\n';
+  msg += '────────────────────\n';
+  carrito.forEach(i=>{
+    msg += `• ${i.nombre} × ${i.cantidad} → $${(parseFloat(i.precio)*i.cantidad).toFixed(2)}\n`;
+  });
+  msg += '────────────────────\n';
+  msg += `*Total: $${total.toFixed(2)}*\n`;
+  msg += `💳 Forma de pago: ${metodo}`;
+  
+  const url = `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+  vaciarCarrito();
+}
 </script>
 </body>
 </html>
