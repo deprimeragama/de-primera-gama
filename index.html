@@ -6,75 +6,73 @@
     <title>Mi Tienda</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
-        body { background: #f5f5f5; padding: 20px; max-width: 1200px; margin: 0 auto; }
-        header { text-align: center; margin-bottom: 30px; }
-        h1 { color: #333; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background: #f8f9fa; padding: 20px; max-width: 1100px; margin: 0 auto; }
+        header { text-align: center; padding: 30px 0; }
+        h1 { color: #2d3748; }
         
-        .productos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-bottom: 40px; }
-        .producto { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .producto h3 { margin-bottom: 10px; color: #222; }
-        .precio { font-size: 22px; font-weight: bold; color: #2563eb; margin-bottom: 15px; }
-        .btn-agregar { background: #2563eb; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; }
-        .btn-agregar:hover { background: #1d4ed8; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .producto { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .producto h3 { color: #1a202c; margin-bottom: 8px; }
+        .producto p { color: #718096; font-size: 14px; margin-bottom: 12px; }
+        .precio { font-size: 24px; font-weight: bold; color: #2b6cb0; margin-bottom: 15px; }
+        .btn-agregar { background: #3182ce; color: white; border: none; padding: 10px; border-radius: 6px; width: 100%; font-size: 16px; cursor: pointer; }
+        .btn-agregar:hover { background: #2b6cb0; }
 
-        .carrito { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: sticky; bottom: 20px; }
+        .carrito { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
         .carrito h2 { margin-bottom: 15px; font-size: 20px; }
-        .item-carrito { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
-        .btn-quitar { background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .total { font-size: 22px; font-weight: bold; margin-top: 15px; text-align: right; }
-        
-        .metodos-pago { margin: 20px 0; }
-        .metodos-pago label { display: block; margin: 8px 0; cursor: pointer; }
-        
-        .btn-whatsapp { background: #25d366; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-size: 17px; font-weight: bold; cursor: pointer; margin-top: 15px; }
-        .btn-whatsapp:hover { background: #128c7e; }
-        
-        .vacio { text-align: center; color: #888; padding: 20px; }
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .btn-quitar { background: #e53e3e; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .total { font-size: 22px; font-weight: bold; text-align: right; margin: 15px 0; }
+        .pago { margin: 20px 0; }
+        .pago label { display: block; margin: 8px 0; cursor: pointer; }
+        .btn-whatsapp { background: #25d366; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-whatsapp:hover { background: #1da851; }
+        .vacio { text-align: center; color: #aaa; padding: 20px; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>🛍️ Mi Tienda Online</h1>
-        <p>Selecciona tus productos y envía tu pedido por WhatsApp</p>
+        <h1>🛍️ Mi Tienda</h1>
+        <p>Elige tus productos y envía tu pedido por WhatsApp</p>
     </header>
 
-    <h2>Productos</h2>
-    <div class="productos-grid" id="lista-productos">
+    <h2>Nuestros Productos</h2>
+    <div class="grid" id="lista">
         <p>Cargando productos...</p>
     </div>
 
     <div class="carrito">
-        <h2>🛒 Tu Carrito</h2>
-        <div id="items-carrito">
+        <h2>🛒 Tu Pedido</h2>
+        <div id="items">
             <p class="vacio">Tu carrito está vacío</p>
         </div>
-        <div class="total" id="total">Total: $0</div>
+        <div class="total" id="total">$0</div>
 
-        <div class="metodos-pago">
+        <div class="pago">
             <h3>Forma de pago:</h3>
             <label><input type="radio" name="pago" value="Efectivo" checked> Efectivo</label>
             <label><input type="radio" name="pago" value="Transferencia"> Transferencia</label>
             <label><input type="radio" name="pago" value="Mercado Pago"> Mercado Pago</label>
         </div>
 
-        <button class="btn-whatsapp" onclick="enviarPedido()">📲 Enviar Pedido por WhatsApp</button>
+        <button class="btn-whatsapp" onclick="enviar()">📲 Enviar Pedido por WhatsApp</button>
     </div>
 
     <script>
-        // 🔧 CONFIGURA AQUÍ TUS DATOS DE SUPABASE
-        const SUPABASE_URL = 'https://hnbiphgdvzypmicmoowp.supabase.co/rest/v1/';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuYmlwaGdkdnp5cG1pY21vb3dwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNDEwMjIsImV4cCI6MjEwNjgxNzAyMn0.DDUqU-LbK0QS6U7DdmrdCN3hPOB9cNlSJuhhG54HvKo';
-        const TELEFONO_VENDEDOR = '5493412141327'; // Tu WhatsApp con código de país, sin espacios ni +
+        // 👇 PEGA TUS DATOS AQUÍ 👇
+        const SUPABASE_URL = 'https://dgbmqopncduepvfsxxfo.supabase.co/rest/v1/';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnYm1xb3BuY2R1ZXB2ZnN4eGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1NjQ0OTksImV4cCI6MjEwNzE0MDQ5OX0.NCI7mL6a8178ichOIp4rQRStv4Z43XhhWVXT815j0jc';
+        const TU_WHATSAPP = '5493412141327'; // Tu número: 549 + código + número
 
         const { createClient } = window.supabase;
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let carrito = [];
-        let productos = [];
+        let todosProductos = [];
 
-        // Cargar productos desde Supabase
+        // Cargar productos desde tu base de datos
         async function cargarProductos() {
             const { data, error } = await supabase
                 .from('productos')
@@ -82,91 +80,88 @@
                 .eq('activo', true);
 
             if (error) {
-                console.error('Error:', error);
-                document.getElementById('lista-productos').innerHTML = '<p>Error al cargar productos</p>';
+                document.getElementById('lista').innerHTML = '<p>Error: revisa tus claves</p>';
+                console.error(error);
                 return;
             }
 
-            productos = data;
-            mostrarProductos();
+            todosProductos = data;
+            mostrar();
         }
 
-        function mostrarProductos() {
-            const contenedor = document.getElementById('lista-productos');
-            contenedor.innerHTML = '';
-
-            productos.forEach(prod => {
-                contenedor.innerHTML += `
+        function mostrar() {
+            const caja = document.getElementById('lista');
+            caja.innerHTML = '';
+            todosProductos.forEach(p => {
+                caja.innerHTML += `
                     <div class="producto">
-                        <h3>${prod.nombre}</h3>
-                        <p>${prod.descripcion || ''}</p>
-                        <div class="precio">$${prod.precio}</div>
-                        <button class="btn-agregar" onclick="agregarAlCarrito(${prod.id})">Agregar al carrito</button>
+                        <h3>${p.nombre}</h3>
+                        <p>${p.descripcion || ''}</p>
+                        <div class="precio">$${p.precio}</div>
+                        <button class="btn-agregar" onclick="agregar(${p.id})">Agregar al carrito</button>
                     </div>
                 `;
             });
         }
 
-        function agregarAlCarrito(id) {
-            const producto = productos.find(p => p.id === id);
-            carrito.push(producto);
+        function agregar(id) {
+            const prod = todosProductos.find(p => p.id === id);
+            carrito.push(prod);
             actualizarCarrito();
         }
 
-        function quitarDelCarrito(indice) {
+        function quitar(indice) {
             carrito.splice(indice, 1);
             actualizarCarrito();
         }
 
         function actualizarCarrito() {
-            const contenedor = document.getElementById('items-carrito');
+            const caja = document.getElementById('items');
             const totalEl = document.getElementById('total');
-
+            
             if (carrito.length === 0) {
-                contenedor.innerHTML = '<p class="vacio">Tu carrito está vacío</p>';
-                totalEl.textContent = 'Total: $0';
+                caja.innerHTML = '<p class="vacio">Tu carrito está vacío</p>';
+                totalEl.textContent = '$0';
                 return;
             }
 
-            let total = 0;
-            contenedor.innerHTML = '';
-            
+            let suma = 0;
+            caja.innerHTML = '';
             carrito.forEach((item, i) => {
-                total += Number(item.precio);
-                contenedor.innerHTML += `
-                    <div class="item-carrito">
+                suma += Number(item.precio);
+                caja.innerHTML += `
+                    <div class="item">
                         <span>${item.nombre}</span>
                         <span>$${item.precio}</span>
-                        <button class="btn-quitar" onclick="quitarDelCarrito(${i})">✕</button>
+                        <button class="btn-quitar" onclick="quitar(${i})">✕</button>
                     </div>
                 `;
             });
-
-            totalEl.textContent = `Total: $${total}`;
+            totalEl.textContent = `$${suma}`;
         }
 
-        function enviarPedido() {
+        function enviar() {
             if (carrito.length === 0) {
-                alert('Agrega productos al carrito primero');
+                alert('Agrega productos primero');
                 return;
             }
 
-            const formaPago = document.querySelector('input[name="pago"]:checked').value;
-            
+            const pago = document.querySelector('input[name="pago"]:checked').value;
             let mensaje = '¡Hola! Quiero hacer este pedido:%0A%0A';
+            let sumaTotal = 0;
+            
             carrito.forEach(item => {
-                mensaje += `- ${item.nombre}: $${item.precio}%0A`;
+                mensaje += `✅ ${item.nombre} - $${item.precio}%0A`;
+                sumaTotal += Number(item.precio);
             });
             
-            const total = carrito.reduce((sum, i) => sum + Number(i.precio), 0);
-            mensaje += `%0ATOTAL: $${total}%0A`;
-            mensaje += `Forma de pago: ${formaPago}`;
+            mensaje += `%0A💰 TOTAL: $${sumaTotal}%0A`;
+            mensaje += `💳 Forma de pago: ${pago}`;
 
-            const url = `https://wa.me/${TELEFONO_VENDEDOR}?text=${mensaje}`;
-            window.open(url, '_blank');
+            window.open(`https://wa.me/${TU_WHATSAPP}?text=${mensaje}`, '_blank');
         }
 
-        // Iniciar
+        // Iniciar todo
         cargarProductos();
     </script>
 </body>
